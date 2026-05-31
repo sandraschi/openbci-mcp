@@ -36,6 +36,9 @@ openbci-mcp = "openbci_mcp.__main__:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+openbci_mcp = ["skills/**/*.md", "bundled_docs/**/*.md"]
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]

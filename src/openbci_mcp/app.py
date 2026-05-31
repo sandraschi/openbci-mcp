@@ -13,6 +13,8 @@ from starlette.responses import JSONResponse
 from starlette.routing import Mount, Route, WebSocketRoute
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
+from openbci_mcp.api.help_routes import api_help_doc, api_help_index
+from openbci_mcp.api.webapp_redirect import WEBAPP_PATHS, redirect_to_webapp
 from openbci_mcp.board_manager import get_board_manager
 from openbci_mcp.config import load_settings
 from openbci_mcp.mcp_app import mcp
@@ -56,8 +58,10 @@ async def root(_: Request) -> JSONResponse:
             "service": "openbci-mcp",
             "version": "0.1.0",
             "webapp": "http://127.0.0.1:10758",
+            "note": "Open the web UI on port 10758. This port (10759) is API + MCP only.",
             "mcp_http": f"http://{settings.host}:{settings.port}{settings.mcp_http_path}",
             "health": f"http://{settings.host}:{settings.port}/health",
+            "help_api": f"http://{settings.host}:{settings.port}/api/help",
         }
     )
 
@@ -200,10 +204,13 @@ def build_app() -> Starlette:
             Route("/api/status", api_status),
             Route("/api/boards", api_boards),
             Route("/api/tools", api_tools),
+            Route("/api/help", api_help_index),
+            Route("/api/help/{doc_id}", api_help_doc),
             Route("/api/board", api_board_action, methods=["POST"]),
             Route("/api/triggers", api_triggers, methods=["GET", "POST"]),
             Route("/api/skill", api_skill),
             WebSocketRoute("/api/ws/eeg", ws_eeg),
+            *[Route(p, redirect_to_webapp) for p in WEBAPP_PATHS],
             Mount(path, app=mcp_http),
         ],
     )

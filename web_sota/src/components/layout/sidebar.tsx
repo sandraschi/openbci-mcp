@@ -1,4 +1,4 @@
-import { Brain, HelpCircle, LayoutDashboard, MessageSquare, Network, Wrench, Zap } from "lucide-react";
+import { BookOpen, Brain, HelpCircle, LayoutDashboard, MessageSquare, Network, Wrench, Zap } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -9,7 +9,8 @@ const NAV = [
   { to: "/apps", label: "Apps", icon: Network },
   { to: "/chat", label: "Chat", icon: MessageSquare },
   { to: "/status", label: "Status", icon: Brain },
-  { to: "/skill", label: "Skill", icon: HelpCircle },
+  { to: "/help", label: "Help", icon: HelpCircle },
+  { to: "/skill", label: "Skill", icon: BookOpen },
 ];
 
 export function Sidebar({ collapsed }: { collapsed: boolean }) {
