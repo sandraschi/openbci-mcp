@@ -21,4 +21,5 @@ Use this server to acquire and analyze EEG from OpenBCI hardware through BrainFl
 ## Integration
 
 - Multicast stream pairs with OpenBCI GUI streaming board mode
-- Band power outputs map well to OSC triggers via downstream automation
+- Band power → OSC via `openbci_trigger` (default 127.0.0.1:9000, see docs/OSC_INTEGRATION.md)
+- Multi-step flows: `agentic_openbci_workflow`

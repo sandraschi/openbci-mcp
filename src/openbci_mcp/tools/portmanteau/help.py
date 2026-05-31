@@ -31,6 +31,16 @@ TOOL_CATALOG = [
         "description": "BrainFlow streamer routing",
     },
     {
+        "name": "openbci_trigger",
+        "operations": ["send_osc", "list_rules", "add_rule", "remove_rule", "evaluate", "history", "fire_test"],
+        "description": "OSC triggers for osc-mcp / VR / DAW",
+    },
+    {
+        "name": "agentic_openbci_workflow",
+        "operations": ["workflow"],
+        "description": "Multi-step sampling workflow (SEP-1577)",
+    },
+    {
         "name": "openbci_help",
         "operations": ["overview", "quickstart", "ports"],
         "description": "This help tool",

@@ -17,6 +17,8 @@ class Settings:
     ip_address: str
     ip_port: int
     probe_on_startup: bool
+    osc_host: str
+    osc_port: int
 
     @classmethod
     def from_env(cls) -> Settings:
@@ -30,6 +32,8 @@ class Settings:
             ip_address=os.getenv("OPENBCI_IP_ADDRESS", "225.1.1.1"),
             ip_port=int(os.getenv("OPENBCI_IP_PORT", "6677")),
             probe_on_startup=os.getenv("OPENBCI_PROBE", "0") == "1",
+            osc_host=os.getenv("OPENBCI_OSC_HOST", "127.0.0.1"),
+            osc_port=int(os.getenv("OPENBCI_OSC_PORT", "9000")),
         )
 
 

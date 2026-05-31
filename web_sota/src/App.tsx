@@ -5,6 +5,7 @@ import { Chat } from "@/pages/chat";
 import { Dashboard } from "@/pages/dashboard";
 import { Skill } from "@/pages/skill";
 import { Status } from "@/pages/status";
+import { Triggers } from "@/pages/triggers";
 import { Tools } from "@/pages/tools";
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
       <AppLayout>
         <Routes>
           <Route path="/" element={<Dashboard />} />
+          <Route path="/triggers" element={<Triggers />} />
           <Route path="/tools" element={<Tools />} />
           <Route path="/apps" element={<Apps />} />
           <Route path="/chat" element={<Chat />} />

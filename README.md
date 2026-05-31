@@ -38,9 +38,13 @@ uv run openbci-mcp --stdio
 | `OPENBCI_SERIAL_PORT` | (empty) | Default COM port |
 | `OPENBCI_BOARD_ID` | 0 | BrainFlow board id hint |
 | `OPENBCI_PROBE` | 0 | Run synthetic probe at startup |
+| `OPENBCI_OSC_HOST` | 127.0.0.1 | Default OSC trigger target |
+| `OPENBCI_OSC_PORT` | 9000 | Default OSC UDP port (osc-mcp / VRChat) |
+| `OPENBCI_TRIGGERS_FILE` | ~/.openbci-mcp/triggers.json | Persisted trigger rules |
 
 ## Links
 
 - [OpenBCI](https://openbci.com/)
 - [BrainFlow docs](https://brainflow.readthedocs.io/)
 - [OpenBCI GUI](https://github.com/OpenBCI/OpenBCI_GUI)
+- [OSC integration](docs/OSC_INTEGRATION.md) (osc-mcp pairing)

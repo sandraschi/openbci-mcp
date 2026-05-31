@@ -16,6 +16,7 @@ dependencies = [
     "numpy>=2.0",
     "prefab-ui>=0.14.0",
     "pyserial>=3.5",
+    "python-osc>=1.9",
     "starlette>=0.46",
     "uvicorn[standard]>=0.32",
     "websockets>=14.0",

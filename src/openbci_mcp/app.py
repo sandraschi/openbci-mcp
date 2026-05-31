@@ -16,13 +16,17 @@ from starlette.websockets import WebSocket, WebSocketDisconnect
 from openbci_mcp.board_manager import get_board_manager
 from openbci_mcp.config import load_settings
 from openbci_mcp.mcp_app import mcp
+from openbci_mcp.tools import agentic  # noqa: F401
 from openbci_mcp.tools import portmanteau  # noqa: F401
+from openbci_mcp.trigger_engine import get_trigger_engine
 
 TOOL_CATALOG = [
     {"name": "openbci_board", "type": "portmanteau", "operations": ["connect", "disconnect", "status", "list_ports", "list_boards", "probe"]},
     {"name": "openbci_stream", "type": "portmanteau", "operations": ["start", "stop", "snapshot", "marker"]},
     {"name": "openbci_signal", "type": "portmanteau", "operations": ["band_power", "filter"]},
     {"name": "openbci_export", "type": "portmanteau", "operations": ["streamer_add", "streamer_file", "streamer_multicast"]},
+    {"name": "openbci_trigger", "type": "portmanteau", "operations": ["send_osc", "list_rules", "add_rule", "remove_rule", "evaluate", "history", "fire_test"]},
+    {"name": "agentic_openbci_workflow", "type": "agentic", "operations": ["workflow"]},
     {"name": "openbci_help", "type": "portmanteau", "operations": ["overview", "quickstart", "ports"]},
 ]
 
@@ -106,9 +110,37 @@ async def api_board_action(request: Request) -> JSONResponse:
         return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
 
 
+async def api_triggers(request: Request) -> JSONResponse:
+    engine = get_trigger_engine()
+    if request.method == "GET":
+        return JSONResponse({"success": True, "rules": engine.list_rules(), "history": engine.history()})
+    try:
+        body: dict[str, Any] = await request.json()
+    except Exception:
+        return JSONResponse({"success": False, "error": "invalid JSON"}, status_code=400)
+    op = body.get("operation", "add_rule")
+    try:
+        if op == "add_rule":
+            return JSONResponse(engine.add_rule(**{k: v for k, v in body.items() if k != "operation"}))
+        if op == "remove_rule":
+            return JSONResponse(engine.remove_rule(str(body.get("rule_id", ""))))
+        if op == "fire_test":
+            return JSONResponse(
+                engine.fire_test(
+                    rule_id=body.get("rule_id"),
+                    address=body.get("osc_address"),
+                    value=float(body.get("osc_value", 1.0)),
+                )
+            )
+        return JSONResponse({"success": False, "error": f"unknown operation {op!r}"}, status_code=400)
+    except Exception as exc:
+        return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
+
+
 async def ws_eeg(websocket: WebSocket) -> None:
     await websocket.accept()
     mgr = get_board_manager()
+    triggers = get_trigger_engine()
     try:
         while True:
             st = mgr.status_dict()
@@ -116,12 +148,15 @@ async def ws_eeg(websocket: WebSocket) -> None:
                 await websocket.send_json({"type": "status", "streaming": False, "connected": st.get("connected")})
             else:
                 snap = mgr.get_board_data(max_samples=64)
-                bands = mgr.band_power(max_samples=128) if snap.get("samples", 0) >= 32 else {"bands": {}}
+                band_payload = mgr.band_power(max_samples=128) if snap.get("samples", 0) >= 32 else {"bands": {}}
+                band_map = band_payload.get("bands", {})
+                fired = triggers.evaluate_bands(band_map) if band_map else []
                 await websocket.send_json(
                     {
                         "type": "frame",
                         "snapshot": snap,
-                        "bands": bands.get("bands", {}),
+                        "bands": band_map,
+                        "fired_triggers": fired,
                         "status": st,
                     }
                 )
@@ -166,6 +201,7 @@ def build_app() -> Starlette:
             Route("/api/boards", api_boards),
             Route("/api/tools", api_tools),
             Route("/api/board", api_board_action, methods=["POST"]),
+            Route("/api/triggers", api_triggers, methods=["GET", "POST"]),
             Route("/api/skill", api_skill),
             WebSocketRoute("/api/ws/eeg", ws_eeg),
             Mount(path, app=mcp_http),

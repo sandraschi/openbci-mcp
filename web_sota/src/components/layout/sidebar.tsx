@@ -1,9 +1,10 @@
-import { Brain, HelpCircle, LayoutDashboard, MessageSquare, Network, Wrench } from "lucide-react";
+import { Brain, HelpCircle, LayoutDashboard, MessageSquare, Network, Wrench, Zap } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 const NAV = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/triggers", label: "Triggers", icon: Zap },
   { to: "/tools", label: "Tools", icon: Wrench },
   { to: "/apps", label: "Apps", icon: Network },
   { to: "/chat", label: "Chat", icon: MessageSquare },

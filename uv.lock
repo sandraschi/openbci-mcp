@@ -781,6 +781,7 @@ dependencies = [
     { name = "numpy" },
     { name = "prefab-ui" },
     { name = "pyserial" },
+    { name = "python-osc" },
     { name = "starlette" },
     { name = "uvicorn", extra = ["standard"] },
     { name = "websockets" },
@@ -804,6 +805,7 @@ requires-dist = [
     { name = "pyserial", specifier = ">=3.5" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8" },
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.24" },
+    { name = "python-osc", specifier = ">=1.9" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8" },
     { name = "starlette", specifier = ">=0.46" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.32" },
@@ -1131,6 +1133,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/4e/fe/70bd71a6738b09a0bdf6480ca6436b167469ca4578b2a0efbe390b4b0e70/python_multipart-0.0.29.tar.gz", hash = "sha256:643e93849196645e2dbdd81a0f8829a23123ad7f797a84a364c6fb3563f18904", size = 45678, upload-time = "2026-05-17T17:29:47.654Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8f/cb/769cfc37177252872a45a71f3fbdde9d51b471a3f3c14bfe95dde3407386/python_multipart-0.0.29-py3-none-any.whl", hash = "sha256:2ddcc971cef266225f54f552d8fa10bcfbb1f14446caec199060daac59ff2d69", size = 29640, upload-time = "2026-05-17T17:29:45.69Z" },
+]
+
+[[package]]
+name = "python-osc"
+version = "1.10.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a1/79/094503dc039c8ba9cead01f4b5e163d795a6a502563d3a31f35d20a1ecf8/python_osc-1.10.2.tar.gz", hash = "sha256:732548f4f467dda9f890a6b0b3bfb085ab117f4bd38a45a58d2ca0f3bd6a546d", size = 33716, upload-time = "2026-04-02T20:46:04.692Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1f/a2/ce26e437e36707f0da839dd88b072413825ea8986b73ce7b5c4f3cd1b7f4/python_osc-1.10.2-py3-none-any.whl", hash = "sha256:018b28e1cc06427c2c3d695f4e8d87d0caecfe604ff889acc45235cfd94183a2", size = 45467, upload-time = "2026-04-02T20:46:03.718Z" },
 ]
 
 [[package]]
