@@ -1,0 +1,7 @@
+{
+  "name": "openbci-mcp",
+  "version": "0.1.0",
+  "description": "OpenBCI EEG MCP server",
+  "entry_point": "openbci_mcp.__main__:main",
+  "transport": ["stdio", "http"]
+}

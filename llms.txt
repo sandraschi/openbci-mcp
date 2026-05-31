@@ -1,0 +1,1 @@
+openbci-mcp: OpenBCI EEG MCP server (BrainFlow). Tools: openbci_board, openbci_stream, openbci_signal, openbci_export, openbci_help. Ports 10758/10759.

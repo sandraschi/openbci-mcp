@@ -1,0 +1,6 @@
+{
+  "name": "openbci-mcp",
+  "description": "OpenBCI brain-computer interface MCP server with BrainFlow and SOTA web dashboard",
+  "category": "hardware",
+  "tags": ["openbci", "eeg", "brainflow", "bci", "mcp"]
+}
