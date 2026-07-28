@@ -42,6 +42,20 @@ uv run openbci-mcp --stdio
 | `OPENBCI_OSC_PORT` | 9000 | Default OSC UDP port (osc-mcp / VRChat) |
 | `OPENBCI_TRIGGERS_FILE` | ~/.openbci-mcp/triggers.json | Persisted trigger rules |
 
+## Documentation
+
+| Guide | Topic |
+|-------|--------|
+| [Usage scenarios](docs/USAGE_SCENARIOS.md) | Master index — pick your path |
+| [Wearable styling](docs/WEARABLE_STYLING.md) | Helmet, cap, superbike look, cable routing |
+| [Neurofeedback](docs/NEUROFEEDBACK.md) | Alpha, zen, focus meters |
+| [BCI control](docs/BCI_CONTROL.md) | Mouse, P300, motor imagery, AI reality check |
+| [VR and creative](docs/VR_CREATIVE.md) | OSC, Resonite, streaming, stage |
+| [Hybrid EMG + EEG](docs/HYBRID_EMG_EEG.md) | Wristbands, clench gating, fusion |
+| [OSC integration](docs/OSC_INTEGRATION.md) | osc-mcp pairing |
+
+Webapp **Help** page (`http://127.0.0.1:10758/help`) loads these via `/api/help`.
+
 ## Links
 
 - [OpenBCI](https://openbci.com/)

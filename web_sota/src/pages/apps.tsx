@@ -11,7 +11,8 @@ export function Apps() {
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">Apps Hub</h1>
       <p className="text-zinc-400">
-        Suggested fleet companions for BCI workflows. Full dynamic discovery can be wired to fleet registry.
+        Suggested fleet companions for BCI workflows. Full dynamic discovery can be wired to fleet
+        registry.
       </p>
       <div className="grid gap-4 md:grid-cols-3">
         {FLEET_HINTS.map((a) => (

@@ -9,10 +9,11 @@ description = "FastMCP 3.2 OpenBCI server - BrainFlow EEG/EMG acquisition, signa
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }
-authors = [{ name = "Sandra Schieder" }]
+authors = [{ name = "Sandra Schipal" }]
 dependencies = [
     "brainflow>=5.14",
-    "fastmcp>=3.2",
+    "fastmcp>=3.4.4,<4",
+    "httpx>=0.28",
     "numpy>=2.0",
     "prefab-ui>=0.14.0",
     "pyserial>=3.5",
@@ -23,7 +24,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "pytest-asyncio>=0.24", "ruff>=0.8", "pre-commit>=4"]
+dev = ["pytest>=8", "pytest-asyncio>=0.24", "ruff>=0.16.0,<0.17", "pre-commit>=4"]
 
 [project.urls]
 Homepage = "https://github.com/sandraschi/openbci-mcp"

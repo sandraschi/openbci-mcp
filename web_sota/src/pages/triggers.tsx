@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { fetchJson } from "@/lib/utils";
+import { API_BASE } from "@/lib/api";
 
 type Rule = {
   id: string;
@@ -49,7 +50,7 @@ export function Triggers() {
   }, [refresh]);
 
   const addRule = async () => {
-    await fetch("/api/triggers", {
+    await fetch(API_BASE + "/api/triggers", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ operation: "add_rule", ...form }),
@@ -58,7 +59,7 @@ export function Triggers() {
   };
 
   const removeRule = async (id: string) => {
-    await fetch("/api/triggers", {
+    await fetch(API_BASE + "/api/triggers", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ operation: "remove_rule", rule_id: id }),
@@ -67,7 +68,7 @@ export function Triggers() {
   };
 
   const fireTest = async () => {
-    await fetch("/api/triggers", {
+    await fetch(API_BASE + "/api/triggers", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ operation: "fire_test", osc_address: "/bci/test", osc_value: 1 }),
@@ -79,7 +80,8 @@ export function Triggers() {
       <div>
         <h1 className="text-2xl font-bold gradient-text">OSC Triggers</h1>
         <p className="text-zinc-400">
-          Band-power rules fire OSC to <span className="font-mono">127.0.0.1:9000</span> (osc-mcp / VRChat / Reaper).
+          Band-power rules fire OSC to <span className="font-mono">127.0.0.1:9000</span> (osc-mcp /
+          VRChat / Reaper).
         </p>
       </div>
 
@@ -88,25 +90,57 @@ export function Triggers() {
           <Zap className="h-4 w-4 text-amber-400" /> New rule
         </h2>
         <div className="grid gap-3 md:grid-cols-3">
-          <input className="rounded bg-zinc-800 px-2 py-1 text-sm" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Name" />
-          <input className="rounded bg-zinc-800 px-2 py-1 text-sm" value={form.channel} onChange={(e) => setForm({ ...form, channel: e.target.value })} placeholder="Channel or *" />
-          <select className="rounded bg-zinc-800 px-2 py-1 text-sm" value={form.band} onChange={(e) => setForm({ ...form, band: e.target.value })}>
+          <input
+            className="rounded bg-zinc-800 px-2 py-1 text-sm"
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            placeholder="Name"
+          />
+          <input
+            className="rounded bg-zinc-800 px-2 py-1 text-sm"
+            value={form.channel}
+            onChange={(e) => setForm({ ...form, channel: e.target.value })}
+            placeholder="Channel or *"
+          />
+          <select
+            className="rounded bg-zinc-800 px-2 py-1 text-sm"
+            value={form.band}
+            onChange={(e) => setForm({ ...form, band: e.target.value })}
+          >
             {["delta", "theta", "alpha", "beta", "gamma"].map((b) => (
-              <option key={b} value={b}>{b}</option>
+              <option key={b} value={b}>
+                {b}
+              </option>
             ))}
           </select>
-          <select className="rounded bg-zinc-800 px-2 py-1 text-sm" value={form.operator} onChange={(e) => setForm({ ...form, operator: e.target.value })}>
+          <select
+            className="rounded bg-zinc-800 px-2 py-1 text-sm"
+            value={form.operator}
+            onChange={(e) => setForm({ ...form, operator: e.target.value })}
+          >
             <option value="gt">&gt;</option>
             <option value="gte">&gt;=</option>
             <option value="lt">&lt;</option>
             <option value="lte">&lt;=</option>
           </select>
-          <input type="number" step="0.01" className="rounded bg-zinc-800 px-2 py-1 text-sm" value={form.threshold} onChange={(e) => setForm({ ...form, threshold: Number(e.target.value) })} />
-          <input className="rounded bg-zinc-800 px-2 py-1 text-sm font-mono" value={form.osc_address} onChange={(e) => setForm({ ...form, osc_address: e.target.value })} />
+          <input
+            type="number"
+            step="0.01"
+            className="rounded bg-zinc-800 px-2 py-1 text-sm"
+            value={form.threshold}
+            onChange={(e) => setForm({ ...form, threshold: Number(e.target.value) })}
+          />
+          <input
+            className="rounded bg-zinc-800 px-2 py-1 text-sm font-mono"
+            value={form.osc_address}
+            onChange={(e) => setForm({ ...form, osc_address: e.target.value })}
+          />
         </div>
         <div className="mt-3 flex gap-2">
           <Button onClick={() => void addRule()}>Add rule</Button>
-          <Button variant="ghost" onClick={() => void fireTest()}>Test OSC</Button>
+          <Button variant="ghost" onClick={() => void fireTest()}>
+            Test OSC
+          </Button>
         </div>
       </Card>
 
@@ -114,7 +148,10 @@ export function Triggers() {
         <h2 className="mb-3 font-semibold">Active rules ({rules.length})</h2>
         <div className="space-y-2">
           {rules.map((r) => (
-            <div key={r.id} className="flex items-center justify-between rounded-lg bg-zinc-900/80 px-3 py-2 text-sm">
+            <div
+              key={r.id}
+              className="flex items-center justify-between rounded-lg bg-zinc-900/80 px-3 py-2 text-sm"
+            >
               <div>
                 <span className="font-medium text-cyan-300">{r.name}</span>
                 <span className="ml-2 text-zinc-500">
@@ -135,8 +172,8 @@ export function Triggers() {
         </h2>
         <div className="max-h-48 space-y-1 overflow-y-auto text-xs font-mono text-zinc-400">
           {history.length === 0 && <p>No triggers fired yet.</p>}
-          {history.map((h, i) => (
-            <div key={i}>
+          {history.map((h) => (
+            <div key={`${h.rule_name}-${h.band}-${h.value}-${h.osc?.address ?? ""}`}>
               {h.rule_name}: {h.band}={h.value?.toExponential?.(2) ?? h.value} → {h.osc?.address}
             </div>
           ))}

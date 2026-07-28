@@ -1,4 +1,5 @@
-import { useState, type ReactNode } from "react";
+import { type ReactNode, useState } from "react";
+import { LoggerPanel } from "./logger-panel";
 import { Sidebar } from "./sidebar";
 import { Topbar } from "./topbar";
 
@@ -9,10 +10,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
       <Sidebar collapsed={collapsed} />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Topbar />
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-6 pb-16">
           <div className="mx-auto max-w-6xl page-enter">{children}</div>
         </main>
       </div>
+      <LoggerPanel />
     </div>
   );
 }

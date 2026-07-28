@@ -12,8 +12,10 @@ import uvicorn
 
 from openbci_mcp.config import load_settings
 from openbci_mcp.mcp_app import mcp
-from openbci_mcp.tools import agentic  # noqa: F401
-from openbci_mcp.tools import portmanteau  # noqa: F401
+from openbci_mcp.tools import (
+    agentic,  # noqa: F401
+    portmanteau,  # noqa: F401
+)
 
 
 def _configure_logging(*, debug: bool) -> None:

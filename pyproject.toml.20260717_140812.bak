@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openbci-mcp"
+version = "0.1.0"
+description = "FastMCP 3.2 OpenBCI server - BrainFlow EEG/EMG acquisition, signal processing, and OSC/LSL export."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "Sandra Schieder" }]
+dependencies = [
+    "brainflow>=5.14",
+    "fastmcp>=3.4.2,<4",
+    "httpx>=0.28",
+    "numpy>=2.0",
+    "prefab-ui>=0.14.0",
+    "pyserial>=3.5",
+    "python-osc>=1.9",
+    "starlette>=0.46",
+    "uvicorn[standard]>=0.32",
+    "websockets>=14.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-asyncio>=0.24", "ruff>=0.8", "pre-commit>=4"]
+
+[project.urls]
+Homepage = "https://github.com/sandraschi/openbci-mcp"
+Repository = "https://github.com/sandraschi/openbci-mcp"
+Issues = "https://github.com/sandraschi/openbci-mcp/issues"
+
+[project.scripts]
+openbci-mcp = "openbci_mcp.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+openbci_mcp = ["skills/**/*.md", "bundled_docs/**/*.md"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "S", "UP", "RUF"]
+ignore = ["S101", "B008"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

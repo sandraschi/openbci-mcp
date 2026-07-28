@@ -9,9 +9,9 @@ from openbci_mcp.tools.portmanteau.trigger import openbci_trigger
 
 __all__ = [
     "openbci_board",
-    "openbci_stream",
-    "openbci_signal",
     "openbci_export",
-    "openbci_trigger",
     "openbci_help",
+    "openbci_signal",
+    "openbci_stream",
+    "openbci_trigger",
 ]

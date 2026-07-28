@@ -1,4 +1,15 @@
-import { BookOpen, Brain, HelpCircle, LayoutDashboard, MessageSquare, Network, Wrench, Zap } from "lucide-react";
+import {
+  BookOpen,
+  Brain,
+  HelpCircle,
+  LayoutDashboard,
+  MessageSquare,
+  Network,
+  ScrollText,
+  Settings2,
+  Wrench,
+  Zap,
+} from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -6,10 +17,12 @@ const NAV = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/triggers", label: "Triggers", icon: Zap },
   { to: "/tools", label: "Tools", icon: Wrench },
+  { to: "/logs", label: "Logs", icon: ScrollText },
   { to: "/apps", label: "Apps", icon: Network },
   { to: "/chat", label: "Chat", icon: MessageSquare },
   { to: "/status", label: "Status", icon: Brain },
   { to: "/help", label: "Help", icon: HelpCircle },
+  { to: "/settings", label: "Settings", icon: Settings2 },
   { to: "/skill", label: "Skill", icon: BookOpen },
 ];
 
@@ -38,7 +51,9 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
             className={({ isActive }) =>
               cn(
                 "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition",
-                isActive ? "bg-cyan-950/50 text-cyan-300" : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100",
+                isActive
+                  ? "bg-cyan-950/50 text-cyan-300"
+                  : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100",
               )
             }
           >

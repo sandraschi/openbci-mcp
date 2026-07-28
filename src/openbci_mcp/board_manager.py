@@ -278,12 +278,8 @@ class BoardManager:
                     float(sampling_rate),
                     True,
                 )
-                theta = DataFilter.get_band_power(
-                    channel_data, len(channel_data), float(sampling_rate), 4.0, 8.0, True
-                )
-                delta = DataFilter.get_band_power(
-                    channel_data, len(channel_data), float(sampling_rate), 1.0, 4.0, True
-                )
+                theta = DataFilter.get_band_power(channel_data, len(channel_data), float(sampling_rate), 4.0, 8.0, True)
+                delta = DataFilter.get_band_power(channel_data, len(channel_data), float(sampling_rate), 1.0, 4.0, True)
                 bands[name] = {
                     "delta": float(delta),
                     "theta": float(theta),
@@ -327,9 +323,7 @@ class BoardManager:
 
             DataFilter.detrend(channel_data, DetrendOperations.CONSTANT.value)
             if filter_type == "bandpass":
-                DataFilter.perform_bandpass(
-                    channel_data, len(channel_data), sr, start_freq, stop_freq, 4, 0, 1
-                )
+                DataFilter.perform_bandpass(channel_data, len(channel_data), sr, start_freq, stop_freq, 4, 0, 1)
             elif filter_type == "lowpass":
                 DataFilter.perform_lowpass(channel_data, len(channel_data), sr, stop_freq, 4, 0, 1)
             elif filter_type == "highpass":

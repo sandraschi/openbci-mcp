@@ -24,9 +24,7 @@ async def openbci_export(
     file_path: Annotated[str | None, Field(description="Local CSV path for file streamer")] = None,
     ip_address: Annotated[str, Field(description="Multicast or LSL target address")] = "225.1.1.1",
     ip_port: Annotated[int, Field(description="Multicast port")] = 6677,
-    streamer_params: Annotated[
-        str | None, Field(description="Raw BrainFlow streamer string (advanced)")
-    ] = None,
+    streamer_params: Annotated[str | None, Field(description="Raw BrainFlow streamer string (advanced)")] = None,
 ) -> ToolResult:
     """
     Route live EEG to external consumers via BrainFlow streamers.

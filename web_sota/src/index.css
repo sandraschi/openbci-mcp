@@ -8,7 +8,11 @@
 
 body {
   margin: 0;
-  font-family: Inter, Segoe UI, system-ui, sans-serif;
+  font-family:
+    Inter,
+    Segoe UI,
+    system-ui,
+    sans-serif;
 }
 
 .gradient-text {

@@ -37,9 +37,7 @@ async def openbci_board(
     mac_address: Annotated[str | None, Field(description="BLE MAC for Ganglion")] = None,
     ip_address: Annotated[str | None, Field(description="Multicast IP for streaming board")] = None,
     ip_port: Annotated[int | None, Field(description="Multicast port for streaming board")] = None,
-    master_board_key: Annotated[
-        str | None, Field(description="Master board when using streaming mode")
-    ] = None,
+    master_board_key: Annotated[str | None, Field(description="Master board when using streaming mode")] = None,
 ) -> ToolResult:
     """
     Manage OpenBCI hardware connections via BrainFlow.

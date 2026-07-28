@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { fetchJson } from "@/lib/utils";
+import { API_BASE } from "@/lib/api";
 
 type BoardStatus = {
   connected?: boolean;
@@ -41,26 +42,7 @@ export function Dashboard() {
     void refresh();
   }, [refresh]);
 
-  useEffect(() => {
-    const proto = window.location.protocol === "https:" ? "wss" : "ws";
-    const ws = new WebSocket(`${proto}://${window.location.host}/api/ws/eeg`);
-    wsRef.current = ws;
-    ws.onmessage = (ev) => {
-      const msg = JSON.parse(ev.data) as {
-        type: string;
-        snapshot?: { channels?: Record<string, number[]> };
-        bands?: Record<string, Record<string, number>>;
-      };
-      if (msg.type === "frame" && msg.snapshot?.channels) {
-        drawEeg(msg.snapshot.channels);
-        if (msg.bands) setBands(msg.bands);
-      }
-    };
-    ws.onerror = () => setError("WebSocket disconnected");
-    return () => ws.close();
-  }, []);
-
-  const drawEeg = (channels: Record<string, number[]>) => {
+  const drawEeg = useCallback((channels: Record<string, number[]>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -92,12 +74,31 @@ export function Dashboard() {
       ctx.font = "10px monospace";
       ctx.fillText(name, 4, rowH * idx + 12);
     });
-  };
+  }, []);
+
+  useEffect(() => {
+    const proto = window.location.protocol === "https:" ? "wss" : "ws";
+    const ws = new WebSocket(`${proto}://${window.location.host}/api/ws/eeg`);
+    wsRef.current = ws;
+    ws.onmessage = (ev) => {
+      const msg = JSON.parse(ev.data) as {
+        type: string;
+        snapshot?: { channels?: Record<string, number[]> };
+        bands?: Record<string, Record<string, number>>;
+      };
+      if (msg.type === "frame" && msg.snapshot?.channels) {
+        drawEeg(msg.snapshot.channels);
+        if (msg.bands) setBands(msg.bands);
+      }
+    };
+    ws.onerror = () => setError("WebSocket disconnected");
+    return () => ws.close();
+  }, [drawEeg]);
 
   const boardAction = async (operation: string, extra: Record<string, unknown> = {}) => {
     setError(null);
     try {
-      const r = await fetch("/api/board", {
+      const r = await fetch(API_BASE + "/api/board", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ operation, board_key: boardKey, serial_port: serialPort, ...extra }),

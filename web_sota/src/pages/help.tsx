@@ -60,7 +60,8 @@ export function Help() {
         <Card className="border-red-900/50 text-red-300">
           <p className="text-sm">{error}</p>
           <p className="mt-2 text-xs text-zinc-500">
-            If API calls fail, start the backend: <code className="text-zinc-300">uv run openbci-mcp --serve</code>
+            If API calls fail, start the backend:{" "}
+            <code className="text-zinc-300">uv run openbci-mcp --serve</code>
           </p>
         </Card>
       )}
@@ -81,7 +82,9 @@ export function Help() {
           ))}
         </Card>
         <Card>
-          <pre className="max-h-[70vh] overflow-auto whitespace-pre-wrap text-sm text-zinc-300">{markdown || "Loading..."}</pre>
+          <pre className="max-h-[70vh] overflow-auto whitespace-pre-wrap text-sm text-zinc-300">
+            {markdown || "Loading..."}
+          </pre>
         </Card>
       </div>
     </div>

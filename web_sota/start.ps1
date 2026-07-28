@@ -9,8 +9,15 @@ if ($Headless -and ($Host.UI.RawUI.WindowTitle -notmatch 'Hidden')) {
 }
 
 $BackendPort = 10759
-$FrontendPort = 10758
 $RepoRoot = Split-Path -Parent $PSScriptRoot
+$FleetStartPath = Join-Path $RepoRoot "scripts\FleetStartMode.ps1"
+if (-not (Test-Path -LiteralPath $FleetStartPath)) {
+    Write-Host "ERROR: Missing vendored launcher helper: $FleetStartPath" -ForegroundColor Red
+    exit 1
+}
+. $FleetStartPath
+
+$FrontendPort = 10758
 
 Write-Host ""
 Write-Host "openbci-mcp - Setup and Start" -ForegroundColor Cyan

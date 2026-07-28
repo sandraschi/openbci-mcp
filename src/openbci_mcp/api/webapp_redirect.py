@@ -10,6 +10,8 @@ WEBAPP_ORIGIN = "http://127.0.0.1:10758"
 WEBAPP_PATHS = (
     "/help",
     "/tools",
+    "/logs",
+    "/settings",
     "/apps",
     "/chat",
     "/status",

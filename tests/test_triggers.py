@@ -7,7 +7,7 @@ from openbci_mcp.trigger_engine import TriggerEngine, get_trigger_engine
 def _reset_triggers(tmp_path, monkeypatch) -> None:
     path = tmp_path / "triggers.json"
     monkeypatch.setenv("OPENBCI_TRIGGERS_FILE", str(path))
-    TriggerEngine._instance = None  # noqa: SLF001
+    TriggerEngine._instance = None
     get_trigger_engine()
 
 

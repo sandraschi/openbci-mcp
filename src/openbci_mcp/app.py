@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import asyncio
+import logging
+from contextlib import asynccontextmanager
 from typing import Any
 
 from starlette.applications import Starlette
@@ -13,26 +15,69 @@ from starlette.responses import JSONResponse
 from starlette.routing import Mount, Route, WebSocketRoute
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
+from openbci_mcp.activity_log import install_log_handler, log_activity
 from openbci_mcp.api.help_routes import api_help_doc, api_help_index
+from openbci_mcp.api.llm_routes import api_ai_chat, api_llm_providers
+from openbci_mcp.api.logs_routes import api_logs_clear, api_logs_export, api_logs_query, api_logs_stats
 from openbci_mcp.api.webapp_redirect import WEBAPP_PATHS, redirect_to_webapp
 from openbci_mcp.board_manager import get_board_manager
 from openbci_mcp.config import load_settings
+from openbci_mcp.llm.manager import get_llm_manager
 from openbci_mcp.mcp_app import mcp
-from openbci_mcp.tools import agentic  # noqa: F401
-from openbci_mcp.tools import portmanteau  # noqa: F401
+from openbci_mcp.tools import (
+    agentic,  # noqa: F401
+    portmanteau,  # noqa: F401
+)
 from openbci_mcp.trigger_engine import get_trigger_engine
 
+logger = logging.getLogger(__name__)
+
 TOOL_CATALOG = [
-    {"name": "openbci_board", "type": "portmanteau", "operations": ["connect", "disconnect", "status", "list_ports", "list_boards", "probe"]},
-    {"name": "openbci_stream", "type": "portmanteau", "operations": ["start", "stop", "snapshot", "marker"]},
-    {"name": "openbci_signal", "type": "portmanteau", "operations": ["band_power", "filter"]},
-    {"name": "openbci_export", "type": "portmanteau", "operations": ["streamer_add", "streamer_file", "streamer_multicast"]},
-    {"name": "openbci_trigger", "type": "portmanteau", "operations": ["send_osc", "list_rules", "add_rule", "remove_rule", "evaluate", "history", "fire_test"]},
+    {
+        "name": "openbci_board",
+        "type": "portmanteau",
+        "operations": [
+            "connect",
+            "disconnect",
+            "status",
+            "list_ports",
+            "list_boards",
+            "probe",
+        ],
+    },
+    {
+        "name": "openbci_stream",
+        "type": "portmanteau",
+        "operations": ["start", "stop", "snapshot", "marker"],
+    },
+    {
+        "name": "openbci_signal",
+        "type": "portmanteau",
+        "operations": ["band_power", "filter"],
+    },
+    {
+        "name": "openbci_export",
+        "type": "portmanteau",
+        "operations": ["streamer_add", "streamer_file", "streamer_multicast"],
+    },
+    {
+        "name": "openbci_trigger",
+        "type": "portmanteau",
+        "operations": [
+            "send_osc",
+            "list_rules",
+            "add_rule",
+            "remove_rule",
+            "evaluate",
+            "history",
+            "fire_test",
+        ],
+    },
     {"name": "agentic_openbci_workflow", "type": "agentic", "operations": ["workflow"]},
     {"name": "openbci_help", "type": "portmanteau", "operations": ["overview", "quickstart", "ports"]},
 ]
 
-mcp_http = mcp.http_app(path="/mcp")
+mcp_http = mcp.http_app(path="/")
 
 
 async def health(_: Request) -> JSONResponse:
@@ -109,8 +154,11 @@ async def api_board_action(request: Request) -> JSONResponse:
             result = mgr.get_board_data(max_samples=int(body.get("max_samples", 128)))
         else:
             return JSONResponse({"success": False, "error": f"unknown operation {op!r}"}, status_code=400)
+        level = "ERROR" if not result.get("success", True) else "INFO"
+        log_activity("board_action", f"board/{op}", level=level, meta={"operation": op})
         return JSONResponse(result)
     except Exception as exc:
+        log_activity("board_action", f"board/{op} failed: {exc}", level="ERROR")
         return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
 
 
@@ -125,19 +173,22 @@ async def api_triggers(request: Request) -> JSONResponse:
     op = body.get("operation", "add_rule")
     try:
         if op == "add_rule":
-            return JSONResponse(engine.add_rule(**{k: v for k, v in body.items() if k != "operation"}))
-        if op == "remove_rule":
-            return JSONResponse(engine.remove_rule(str(body.get("rule_id", ""))))
-        if op == "fire_test":
-            return JSONResponse(
-                engine.fire_test(
-                    rule_id=body.get("rule_id"),
-                    address=body.get("osc_address"),
-                    value=float(body.get("osc_value", 1.0)),
-                )
+            result = engine.add_rule(**{k: v for k, v in body.items() if k != "operation"})
+        elif op == "remove_rule":
+            result = engine.remove_rule(str(body.get("rule_id", "")))
+        elif op == "fire_test":
+            result = engine.fire_test(
+                rule_id=body.get("rule_id"),
+                address=body.get("osc_address"),
+                value=float(body.get("osc_value", 1.0)),
             )
-        return JSONResponse({"success": False, "error": f"unknown operation {op!r}"}, status_code=400)
+        else:
+            return JSONResponse({"success": False, "error": f"unknown operation {op!r}"}, status_code=400)
+        level = "ERROR" if not result.get("success", True) else "INFO"
+        log_activity("trigger", f"trigger/{op}", level=level, meta={"operation": op})
+        return JSONResponse(result)
     except Exception as exc:
+        log_activity("trigger", f"trigger/{op} failed: {exc}", level="ERROR")
         return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
 
 
@@ -171,7 +222,7 @@ async def ws_eeg(websocket: WebSocket) -> None:
         try:
             await websocket.send_json({"type": "error", "error": str(exc)})
         except Exception:
-            pass
+            logger.debug("Could not send WebSocket error frame", exc_info=True)
 
 
 async def api_skill(_: Request) -> JSONResponse:
@@ -181,6 +232,15 @@ async def api_skill(_: Request) -> JSONResponse:
     if skill_path.is_file():
         return JSONResponse({"success": True, "skill": skill_path.read_text(encoding="utf-8")})
     return JSONResponse({"success": False, "error": "skill not found"}, status_code=404)
+
+
+@asynccontextmanager
+async def _lifespan(app: Starlette):
+    install_log_handler()
+    log_activity("system", "openbci-mcp HTTP starting", level="INFO")
+    await get_llm_manager().glom_local_providers_if_up()
+    async with mcp_http.lifespan(app):
+        yield
 
 
 def build_app() -> Starlette:
@@ -196,7 +256,7 @@ def build_app() -> Starlette:
         )
     ]
     return Starlette(
-        lifespan=mcp_http.lifespan,
+        lifespan=_lifespan,
         middleware=middleware,
         routes=[
             Route("/", root),
@@ -206,6 +266,12 @@ def build_app() -> Starlette:
             Route("/api/tools", api_tools),
             Route("/api/help", api_help_index),
             Route("/api/help/{doc_id}", api_help_doc),
+            Route("/api/logs", api_logs_query, methods=["GET"]),
+            Route("/api/logs/stats", api_logs_stats),
+            Route("/api/logs/export", api_logs_export),
+            Route("/api/logs", api_logs_clear, methods=["DELETE"]),
+            Route("/api/llm/providers", api_llm_providers),
+            Route("/api/ai/chat", api_ai_chat, methods=["POST"]),
             Route("/api/board", api_board_action, methods=["POST"]),
             Route("/api/triggers", api_triggers, methods=["GET", "POST"]),
             Route("/api/skill", api_skill),
