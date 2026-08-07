@@ -1,13 +1,13 @@
 set windows-shell := ["powershell.exe", "-NoLogo", "-Command"]
 import 'scripts/just/fleet.just'
 
-# ── Dashboard ─────────────────────────────────────────────────────────────────
+# --- Dashboard ---
 
 # Open the interactive recipe dashboard in the browser
 default:
     @just --list
 
-# ── Quality ───────────────────────────────────────────────────────────────────
+# --- Quality ---
 
 # Execute Ruff linting and Biome CI on web_sota
 lint:
@@ -32,7 +32,7 @@ test:
 # Lint and test (fleet check recipe)
 check: lint test
 
-# ── Runtime ───────────────────────────────────────────────────────────────────
+# --- Runtime ---
 
 # Install dependencies and sync environment
 sync:
@@ -61,7 +61,7 @@ webapp:
 # Sync, lint, and test
 dev: sync lint test
 
-# ── Hardening ─────────────────────────────────────────────────────────────────
+# --- Hardening ---
 
 # Execute Bandit security audit
 check-sec:
@@ -76,3 +76,9 @@ audit-deps:
 # Playwright fleet audit (requires backend + web running)
 e2e:
     powershell.exe -NoProfile -ExecutionPolicy Bypass -File "D:\Dev\repos\mcp-central-docs\scripts\playwright-audit.ps1" -RepoPath "{{justfile_directory()}}"
+
+# Bootstrap: install dev deps + pre-commit hook
+bootstrap:
+    uv sync --group dev
+    uv run pre-commit install
+    Write-Host "Pre-commit hooks installed." -ForegroundColor Green
