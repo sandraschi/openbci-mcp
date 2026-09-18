@@ -11,18 +11,11 @@ default:
 
 # Execute Ruff linting and Biome CI on web_sota
 lint:
-    Set-Location '{{justfile_directory()}}'
-    uv run ruff check src tests
-    Set-Location '{{justfile_directory()}}\web_sota'
-    npm run biome:ci
+    Set-Location '{{justfile_directory()}}'; uv run ruff check src tests; Set-Location '{{justfile_directory()}}\web_sota'; npm run biome:ci
 
 # Execute Ruff fix/format and Biome write
 fix:
-    Set-Location '{{justfile_directory()}}'
-    uv run ruff check src tests --fix --unsafe-fixes
-    uv run ruff format src tests
-    Set-Location '{{justfile_directory()}}\web_sota'
-    npm run biome
+    Set-Location '{{justfile_directory()}}'; uv run ruff check src tests --fix --unsafe-fixes; uv run ruff format src tests; Set-Location '{{justfile_directory()}}\web_sota'; npm run biome
 
 # Run Python tests
 test:
@@ -50,13 +43,11 @@ stdio:
 
 # Start Vite dashboard (port 10758)
 web:
-    Set-Location '{{justfile_directory()}}\web_sota'
-    npm run dev
+    Set-Location '{{justfile_directory()}}\web_sota'; npm run dev
 
 # Build production web dashboard
 webapp:
-    Set-Location '{{justfile_directory()}}\web_sota'
-    npm run build
+    Set-Location '{{justfile_directory()}}\web_sota'; npm run build
 
 # Sync, lint, and test
 dev: sync lint test
