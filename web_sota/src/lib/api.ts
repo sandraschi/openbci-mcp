@@ -67,7 +67,11 @@ export interface AiChatResponse {
   tool_calls?: string[];
 }
 
-export const API_BASE = "http://127.0.0.1:10759";
+export const IN_TAURI =
+  typeof window !== "undefined" && ("__TAURI__" in window || "__TAURI_INTERNALS__" in window);
+// Same-origin by default (Vite proxy in dev). Absolute backend URL only inside Tauri,
+// where there is no dev-server proxy — BROWSER_PATH rule, no hardcoded localhost calls.
+export const API_BASE = IN_TAURI ? "http://127.0.0.1:10759" : "";
 const API = API_BASE + "/api";
 const LLM_KEY = "openbci-llm-settings";
 const OSC_KEY = "openbci-osc-settings";

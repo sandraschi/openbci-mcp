@@ -39,7 +39,6 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
         {!collapsed && (
           <div>
             <div className="text-sm font-bold">openbci-mcp</div>
-            <div className="text-xs text-zinc-500">v0.1.0</div>
           </div>
         )}
       </div>

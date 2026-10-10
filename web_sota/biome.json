@@ -3,6 +3,9 @@
   "vcs": {
     "enabled": false
   },
+  "files": {
+    "includes": ["**", "!dist", "!node_modules", "!coverage"]
+  },
   "formatter": {
     "enabled": true,
     "formatWithErrors": false,
@@ -14,7 +17,7 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "preset": "recommended",
+      "recommended": true,
       "style": {
         "noNonNullAssertion": "warn"
       },

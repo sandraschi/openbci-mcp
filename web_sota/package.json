@@ -11,6 +11,7 @@
     "biome": "biome check --write ."
   },
   "dependencies": {
+    "@tauri-apps/api": "^2.2.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.563.0",
     "react": "^19.2.0",
