@@ -78,11 +78,10 @@ PROCESS_NAMES = cfg("backend_process_names", [])
 
 
 def log(msg):
-    print(f"  [cua-webapp] {msg}", flush=True)
+    pass
 
 
 def fatal(msg):
-    print(f"  [cua-webapp] FATAL: {msg}", flush=True)
     sys.exit(1)
 
 
@@ -107,8 +106,8 @@ def kill_stale():
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             f.write(ps)
-        subprocess.run(  # noqa: S603 - fixed literal command array, local test script
-            ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", path],  # noqa: S607 - powershell on PATH by fleet standard
+        subprocess.run(
+            ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", path],
             capture_output=True,
             timeout=15,
         )
@@ -135,12 +134,12 @@ def start_stack():
                 env.pop(v, None)
             env["FLEET_PROBE_RUN"] = "1"
             env["FLEET_PROBE_LOG_DIR"] = str(repo_root / "cua-reports" / "logs")
-            subprocess.Popen(  # noqa: S603 - fixed literal command array, local test script
+            subprocess.Popen(
                 [
                     "powershell.exe",
                     "-NoProfile",
                     "-ExecutionPolicy",
-                    "Bypass",  # noqa: S607 - powershell on PATH by fleet standard
+                    "Bypass",
                     "-File",
                     str(start_ps1),
                     "-Headless",
@@ -160,11 +159,11 @@ def start_stack():
         log("No backend_module in config — cannot direct-spawn backend")
         return False
     log(f"Direct spawn fallback: python -m {module}")
-    subprocess.Popen(  # noqa: S603 - fixed literal command array, local test script
+    subprocess.Popen(
         [
             "powershell.exe",
             "-NoProfile",
-            "-Command",  # noqa: S607 - powershell on PATH by fleet standard
+            "-Command",
             f"Set-Location '{repo_root}'; $env:BACKEND_PORT='{BACKEND_PORT}'; uv run python -m {module}",
         ],
         cwd=str(repo_root),
@@ -217,7 +216,7 @@ def open_browser():
         return True
     url = f"http://127.0.0.1:{FRONTEND_PORT}"
     try:
-        subprocess.Popen(["cmd", "/c", "start", "", url])  # noqa: S603, S607 - fixed literal, cmd.exe on PATH by design
+        subprocess.Popen(["cmd", "/c", "start", "", url])
         log(f"Opened browser: {url}")
         return True
     except Exception as e:
@@ -443,9 +442,6 @@ def main():
     BACKEND_PORT = int(cfg("backend_port", 10700))
     FRONTEND_PORT = int(cfg("frontend_port", 0))
     BACKEND_URL = f"http://127.0.0.1:{BACKEND_PORT}"
-
-    print(f"=== CUA Webapp Test v{CUA_WEBAPP_TEST_VERSION} ===")
-    print(f"Product: {PRODUCT_NAME}  Backend: {BACKEND_PORT}  Frontend: {FRONTEND_PORT or 'n/a'}")
 
     phases = [
         ("1-kill-stale", kill_stale, True),

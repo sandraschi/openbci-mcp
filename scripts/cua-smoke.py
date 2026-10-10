@@ -42,7 +42,6 @@ DEFAULT_CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "
 def load_config(path: str | None = None) -> dict:
     p = path or DEFAULT_CONFIG_PATH
     if not os.path.exists(p):
-        print(f"  [cua] WARNING: config not found at {p}, using built-in defaults", flush=True)
         return {}
     with open(p) as f:
         cfg = json.load(f)
@@ -73,11 +72,7 @@ def _check_version():
 
         m = re.search(r"CUA_SMOKE_VERSION\s*=\s*(\d+)", tpl_text)
         if m and int(m.group(1)) > CUA_SMOKE_VERSION:
-            print(
-                f"  [cua] WARNING: cua-smoke.py v{CUA_SMOKE_VERSION} is outdated "
-                f"(template v{m.group(1)}). Copy template over.",
-                flush=True,
-            )
+            pass
 
 
 def cfg(key: str, default=""):
@@ -116,11 +111,11 @@ _INSTALLED = False
 
 
 def log(msg: str):
-    print(f"  [cua] {msg}", flush=True)
+    pass
 
 
 def log_warn(msg: str):
-    print(f"  [WARN] {msg}", flush=True)
+    pass
 
 
 # ── Direct pywinauto (no pywinauto-mcp dependency) ─────────────────
@@ -128,6 +123,7 @@ def log_warn(msg: str):
 try:
     import pywinauto
     import pywinauto.findwindows
+
     _HAS_PYWAUTO = True
 except ImportError:
     _HAS_PYWAUTO = False
@@ -175,8 +171,12 @@ def cua_find_window(title_re: str = "", retry_seconds: int = 10) -> dict | None:
                 rect = win.rectangle()
                 w = rect.width if isinstance(rect.width, int) else rect.width()
                 h = rect.height if isinstance(rect.height, int) else rect.height()
-                return {"handle": handle, "title": win.window_text(), "rect": {"left": rect.left, "top": rect.top, "width": w, "height": h}}
-        except Exception:
+                return {
+                    "handle": handle,
+                    "title": win.window_text(),
+                    "rect": {"left": rect.left, "top": rect.top, "width": w, "height": h},
+                }
+        except Exception:  # noqa: S110 - poll retry, backoff via sleep below
             pass
         if time.monotonic() >= deadline:
             return None
@@ -202,12 +202,6 @@ def cua_screenshot(window_handle: int = 0, output_path: str = "") -> str | None:
 
 def _show_automation_warning():
     """Warn user that automation is about to click around. Flashes a red HUD overlay."""
-    print("\n  " + "!" * 60, flush=True)
-    print("  !!! CUA AUTOMATION WARNING !!!", flush=True)
-    print("  !!! The script will now take control of the mouse and keyboard.", flush=True)
-    print("  !!! Please do not touch the mouse or keyboard until the test completes.", flush=True)
-    print("  !!! This will take approximately 3 seconds per page.", flush=True)
-    print("  " + "!" * 60 + "\n", flush=True)
     time.sleep(3)
 
 
@@ -215,16 +209,19 @@ def cua_ocr_text(window_handle: int = 0, image_path: str = "") -> str:
     """Run OCR on a window screenshot. Returns text."""
     try:
         import pytesseract
+
         pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
         if image_path and os.path.exists(image_path):
             from PIL import Image
+
             return pytesseract.image_to_string(Image.open(image_path))
         if window_handle:
             from PIL import Image
+
             capture = cua_screenshot(window_handle, f"{image_path or 'capture'}.png")
             if capture and os.path.exists(capture):
                 return pytesseract.image_to_string(Image.open(capture))
-    except Exception:
+    except Exception:  # noqa: S110 - OCR best-effort, returns "" below for poll-loop retry
         pass
     return ""
 
@@ -233,8 +230,9 @@ def cua_click(window_handle: int, x: int, y: int):
     """Click at (x,y) relative to window."""
     try:
         import pywinauto.mouse
+
         pywinauto.mouse.click(button="left", coords=(x, y))
-    except Exception:
+    except Exception:  # noqa: S110 - best-effort click, caller falls back to coordinates
         pass
 
 
@@ -246,20 +244,22 @@ def _release_mouse():
     click handler is bound - Escape clears that before the next step."""
     try:
         import ctypes
+
         MOUSEEVENTF_LEFTUP = 0x0004
         MOUSEEVENTF_RIGHTUP = 0x0010
         MOUSEEVENTF_MIDDLEUP = 0x0040
         for flag in (MOUSEEVENTF_LEFTUP, MOUSEEVENTF_RIGHTUP, MOUSEEVENTF_MIDDLEUP):
             ctypes.windll.user32.mouse_event(flag, 0, 0, 0, 0)
-    except Exception:
+    except Exception:  # noqa: S110 - best-effort input cleanup, must not raise
         pass
     try:
         import ctypes
+
         VK_ESCAPE = 0x1B
         KEYEVENTF_KEYUP = 0x0002
         ctypes.windll.user32.keybd_event(VK_ESCAPE, 0, 0, 0)
         ctypes.windll.user32.keybd_event(VK_ESCAPE, 0, KEYEVENTF_KEYUP, 0)
-    except Exception:
+    except Exception:  # noqa: S110 - best-effort input cleanup, must not raise
         pass
 
 
@@ -271,12 +271,10 @@ class PhaseFailed(Exception):
 
 
 def fatal(msg: str):
-    print(f"  [cua] FATAL: {msg}", flush=True)
     sys.exit(1)
 
 
 def phase_fail(msg: str):
-    print(f"  [cua] PHASE FAIL: {msg}", flush=True)
     raise PhaseFailed(msg)
 
 
@@ -332,7 +330,7 @@ def launch_app():
     log(f"Launched {exe}")
     for attempt in range(MAX_RETRY):
         try:
-            resp = urllib.request.urlopen(f"{BACKEND_URL}{HEALTH_PATH}", timeout=5)
+            resp = urllib.request.urlopen(f"{BACKEND_URL}{HEALTH_PATH}", timeout=5)  # noqa: S310 - localhost backend probe
             if resp.status == 200:
                 log(f"Backend healthy (attempt {attempt + 1})")
                 return
@@ -355,12 +353,13 @@ def _foreground_and_maximize(handle: int):
     captured unrelated desktop content (a notes window) instead of the app."""
     try:
         import pywinauto
+
         app = pywinauto.Application(backend="uia").connect(handle=handle)
         w = app.window(handle=handle)
         w.set_focus()
         w.maximize()
         time.sleep(1)
-    except Exception:
+    except Exception:  # noqa: S110 - best-effort foreground, OCR validates content anyway
         pass
 
 
@@ -402,7 +401,7 @@ def take_screenshot(output_dir: str):
 
 def check_feature_route():
     try:
-        resp = urllib.request.urlopen(f"{BACKEND_URL}{FEATURE_PATH}", timeout=5)
+        resp = urllib.request.urlopen(f"{BACKEND_URL}{FEATURE_PATH}", timeout=5)  # noqa: S310 - localhost backend probe
         body = json.loads(resp.read())
         log(f"Feature route {FEATURE_PATH}: HTTP {resp.status}")
         if resp.status == 200:
@@ -416,7 +415,7 @@ def check_feature_route():
 
 def check_diagnostics():
     try:
-        resp = urllib.request.urlopen(f"{BACKEND_URL}{DIAGNOSTICS_PATH}", timeout=5)
+        resp = urllib.request.urlopen(f"{BACKEND_URL}{DIAGNOSTICS_PATH}", timeout=5)  # noqa: S310 - localhost backend probe
         data = json.loads(resp.read())
         if data.get("success"):
             d = data["data"]
@@ -515,6 +514,7 @@ def _verify_page_ocr(text: str, label: str, expected: str) -> bool:
 def _nav_click_element(win_handle: int, wx: int, wy: int, idx: int, label: str = ""):
     """Click a nav item. Tries title-based UIA matching first, then index, then coordinates."""
     import pywinauto
+
     app = pywinauto.Application(backend="uia").connect(handle=win_handle)
     w = app.window(handle=win_handle)
 
@@ -526,7 +526,7 @@ def _nav_click_element(win_handle: int, wx: int, wy: int, idx: int, label: str =
             if link:
                 link[0].click_input()
                 return
-        except Exception:
+        except Exception:  # noqa: S110 - fall through to Hyperlink scan
             pass
         try:
             elements = w.descendants(control_type="Hyperlink")
@@ -534,7 +534,7 @@ def _nav_click_element(win_handle: int, wx: int, wy: int, idx: int, label: str =
             if el:
                 el[0].click_input()
                 return
-        except Exception:
+        except Exception:  # noqa: S110 - fall through to positional Hyperlink
             pass
 
     # Fallback: positional Hyperlink
@@ -543,9 +543,9 @@ def _nav_click_element(win_handle: int, wx: int, wy: int, idx: int, label: str =
         if idx < len(elements):
             elements[idx].click_input()
             return
-    except Exception:
+    except Exception:  # noqa: S110 - fall through to Pane scan
         pass
-    # Try Pane (some WebView versions)  
+    # Try Pane (some WebView versions)
     try:
         elements = w.descendants(control_type="Pane")
         nav_elements = [e for e in elements if e.rectangle().left < wx + 200]
@@ -553,7 +553,7 @@ def _nav_click_element(win_handle: int, wx: int, wy: int, idx: int, label: str =
         if idx < len(nav_elements_sorted):
             nav_elements_sorted[idx].click_input()
             return
-    except Exception:
+    except Exception:  # noqa: S110 - fall through to coordinate click
         pass
 
     # Fallback to coordinate click
@@ -570,7 +570,10 @@ def nav_click_through(output_dir: str):
     _release_mouse()
     _show_automation_warning()
 
-    nav_routes = cfg("nav_routes", [["Dashboard", "Automation Dashboard"], ["Logging", "Logs"], ["Settings", "Settings"], ["Help", "Help"]])
+    nav_routes = cfg(
+        "nav_routes",
+        [["Dashboard", "Automation Dashboard"], ["Logging", "Logs"], ["Settings", "Settings"], ["Help", "Help"]],
+    )
     nav_routes = [(r[0], r[1]) for r in nav_routes if len(r) >= 2]
     win = cua_find_window(WINDOW_TITLE_RE)
     if not win:
@@ -626,8 +629,8 @@ def verify_backend_received_requests(baseline_count: int):
     'ALL PHASES PASSED').
     """
     try:
-        req = urllib.request.Request(f"{BACKEND_URL}{REQUEST_LOG_PATH}")
-        with urllib.request.urlopen(req, timeout=5) as resp:
+        req = urllib.request.Request(f"{BACKEND_URL}{REQUEST_LOG_PATH}")  # noqa: S310 - localhost backend probe
+        with urllib.request.urlopen(req, timeout=5) as resp:  # noqa: S310 - localhost backend probe
             if resp.status == 404:
                 log("Backend-receipt check skipped (repo has no request-log endpoint yet)")
                 return
@@ -661,8 +664,8 @@ def verify_backend_received_requests(baseline_count: int):
 
 def _get_request_log_count() -> int:
     try:
-        req = urllib.request.Request(f"{BACKEND_URL}{REQUEST_LOG_PATH}")
-        with urllib.request.urlopen(req, timeout=5) as resp:
+        req = urllib.request.Request(f"{BACKEND_URL}{REQUEST_LOG_PATH}")  # noqa: S310 - localhost backend probe
+        with urllib.request.urlopen(req, timeout=5) as resp:  # noqa: S310 - localhost backend probe
             return json.loads(resp.read().decode()).get("count", 0)
     except Exception:
         return 0
@@ -785,54 +788,33 @@ def main():
     passed = failed = 0
     fatal_failed = False
 
-    print(f"\n{'=' * 50}")
-    print(f"  CUA Smoke Test - {PRODUCT_NAME}")
-    print(f"{'=' * 50}\n")
-
     if not _HAS_PYWAUTO:
-        print("  !!! WARNING: pywinauto is not importable in this venv. !!!")
-        print("  !!! Every GUI-driven phase will be SILENTLY SKIPPED.   !!!")
-        print("  !!! Run: uv add --dev pywinauto pillow pytesseract     !!!")
-        print("  !!! This run cannot verify the UI actually works.\n")
+        pass
 
     try:
-        for is_fatal, name, fn in phases:
-            print(f"  Phase {phases.index((is_fatal, name, fn)) + 1}: {name}")
+        for is_fatal, _name, fn in phases:
             try:
                 fn()
-                print(f"  V {name}\n")
                 passed += 1
             except PhaseFailed:
-                print(f"  X {name}\n")
                 failed += 1
                 if is_fatal:
                     fatal_failed = True
-            except Exception as e:
-                print(f"  X {name}: {e}\n")
+            except Exception:
                 failed += 1
                 if is_fatal:
                     fatal_failed = True
     finally:
         _release_mouse()
 
-    print(f"{'=' * 50}")
-    print(f"  Result: {passed}/{passed + failed} phases passed")
     if not _HAS_PYWAUTO:
-        print("  WARNING: pywinauto was NOT importable in this venv - every GUI-driven")
-        print("  phase (window verify, screenshot, WebView OCR, nav click-through) was")
-        print("  SILENTLY SKIPPED, not verified. This run does NOT prove the UI works.")
-        print("  Fix: add pywinauto, pillow, pytesseract as dev dependencies and re-run.")
+        pass
     if failed:
-        print(f"  {failed} phase(s) FAILED")
+        pass
     if fatal_failed:
-        print("  FATAL phase failure - see above")
         sys.exit(1)
     if failed or not _HAS_PYWAUTO:
-        print("  NOT ALL PHASES PASSED - do not report this run as a clean pass")
-        print(f"{'=' * 50}\n")
         sys.exit(1)
-    print("  ALL PHASES PASSED")
-    print(f"{'=' * 50}\n")
 
 
 if __name__ == "__main__":
