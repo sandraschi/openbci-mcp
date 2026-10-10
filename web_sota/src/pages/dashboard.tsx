@@ -2,8 +2,8 @@ import { Activity, Plug, Radio, Waves } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { fetchJson } from "@/lib/utils";
 import { API_BASE } from "@/lib/api";
+import { fetchJson } from "@/lib/utils";
 
 type BoardStatus = {
   connected?: boolean;
@@ -116,6 +116,13 @@ export function Dashboard() {
       <div>
         <h1 className="text-3xl font-bold gradient-text">OpenBCI Dashboard</h1>
         <p className="text-zinc-400">Live EEG via BrainFlow · Cyton / Ganglion / synthetic</p>
+        <a
+          href="/help"
+          data-testid="onboarding-cue"
+          className="mt-3 inline-block rounded-lg border border-red-500 bg-red-950/40 px-4 py-2 text-sm font-semibold text-red-200 hover:bg-red-900/50"
+        >
+          New here? Start onboarding — synthetic probe to live EEG in 10 minutes
+        </a>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">

@@ -2,8 +2,8 @@ import { Radio, Trash2, Zap } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { fetchJson } from "@/lib/utils";
 import { API_BASE } from "@/lib/api";
+import { fetchJson } from "@/lib/utils";
 
 type Rule = {
   id: string;

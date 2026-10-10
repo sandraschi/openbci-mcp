@@ -150,7 +150,9 @@ export function Settings() {
             >
               {glomProviders.length > 0 ? (
                 glomProviders.map((p) => (
-                  <option key={p.type} value={p.type}>{p.label || p.type}</option>
+                  <option key={p.type} value={p.type}>
+                    {p.label || p.type}
+                  </option>
                 ))
               ) : (
                 <>
