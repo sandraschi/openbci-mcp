@@ -100,8 +100,8 @@ class BoardManager:
 
             for p in serial.tools.list_ports.comports():
                 ports.append({"device": p.device, "description": p.description or "", "hwid": p.hwid or ""})
-        except Exception as exc:
-            logger.warning("serial port enumeration failed: %s", exc)
+        except Exception:
+            logger.exception("serial port enumeration failed")
         return ports
 
     def supported_boards(self) -> list[dict[str, Any]]:

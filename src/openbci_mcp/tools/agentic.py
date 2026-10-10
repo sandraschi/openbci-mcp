@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Annotated, Any
+from typing import Annotated, Any, cast
 
 from fastmcp import Context
 from fastmcp.tools import ToolResult
@@ -51,6 +51,11 @@ async def agentic_openbci_workflow(
 ) -> ToolResult:
     """
     Multi-step OpenBCI workflows via FastMCP sampling (SEP-1577).
+
+    ## Return Format
+    ``{"success": bool, "operation": "agentic_openbci_workflow", "message": str,
+    "result": {"final_output": str, "iterations": int, "executed_tools": [...]}}``.
+    Failures carry ``error``, ``error_code``, ``message``, ``recovery_options``.
 
     Example:
     agentic_openbci_workflow(
@@ -108,7 +113,7 @@ async def agentic_openbci_workflow(
         step = await context.sample_step(
             messages,
             system_prompt=system_prompt,
-            tools=tools_for_sampling,
+            tools=cast(Any, tools_for_sampling),
             execute_tools=True,
             max_tokens=4096,
         )
@@ -124,6 +129,7 @@ async def agentic_openbci_workflow(
                 content={
                     "success": True,
                     "operation": "agentic_openbci_workflow",
+                    "message": f"Workflow finished in {iterations} iterations",
                     "result": {
                         "final_output": getattr(step, "text", "") or "",
                         "iterations": iterations,

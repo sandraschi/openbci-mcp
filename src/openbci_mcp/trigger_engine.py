@@ -79,8 +79,8 @@ class TriggerEngine:
             for item in data.get("rules", []):
                 rule = TriggerRule(**{k: v for k, v in item.items() if k != "_above_since"})
                 self._rules[rule.id] = rule
-        except Exception as exc:
-            logger.warning("Failed to load triggers: %s", exc)
+        except Exception:
+            logger.exception("Failed to load triggers")
 
     def _save(self) -> None:
         self._path.parent.mkdir(parents=True, exist_ok=True)
@@ -173,8 +173,8 @@ class TriggerEngine:
                     self._history.append(event)
                     fired.append(event)
                     rule._above_since = now
-                except Exception as exc:
-                    logger.warning("Trigger OSC failed for %s: %s", rule.name, exc)
+                except Exception:
+                    logger.exception("Trigger OSC failed for %s", rule.name)
 
         return fired
 
