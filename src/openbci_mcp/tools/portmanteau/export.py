@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Annotated, Literal
+import logging
+from typing import Annotated, Any, Literal
 
 from fastmcp.tools import ToolResult
 from pydantic import Field
@@ -10,9 +11,15 @@ from pydantic import Field
 from openbci_mcp.board_manager import get_board_manager
 from openbci_mcp.mcp_app import mcp
 
+logger = logging.getLogger(__name__)
+
 
 def _err(message: str) -> ToolResult:
-    return ToolResult(content={"success": False, "error": message}, is_error=True)
+    return ToolResult(content={"success": False, "error": message, "message": message}, is_error=True)
+
+
+def _ok(message: str, result: dict[str, Any]) -> ToolResult:
+    return ToolResult(content={**result, "message": message})
 
 
 @mcp.tool(version="1.0.0")
@@ -37,21 +44,29 @@ async def openbci_export(
     Examples (BrainFlow streamer syntax):
     - file://C:/recordings/session.csv
     - streaming_board://225.1.1.1:6677
+
+    ## Return Format
+    ``{"success": bool, "message": str, ...streamer payload}``.
+
+    ## Examples
+    ``openbci_export(operation="streamer_file", file_path="C:/recordings/session.csv")`` -> CSV recording.
+    ``openbci_export(operation="streamer_multicast")`` -> GUI bridge on 225.1.1.1:6677.
     """
     mgr = get_board_manager()
     try:
         if operation == "streamer_add":
             if not streamer_params:
                 return _err("streamer_params is required for streamer_add")
-            return ToolResult(content=mgr.add_streamer(streamer_params))
+            return _ok(f"Streamer added: {streamer_params}", mgr.add_streamer(streamer_params))
         if operation == "streamer_file":
             if not file_path:
                 return _err("file_path is required for streamer_file")
             uri = file_path if file_path.startswith("file://") else f"file://{file_path}"
-            return ToolResult(content=mgr.add_streamer(uri))
+            return _ok(f"Recording to {uri}", mgr.add_streamer(uri))
         if operation == "streamer_multicast":
             uri = f"streaming_board://{ip_address}:{ip_port}"
-            return ToolResult(content=mgr.add_streamer(uri))
+            return _ok(f"Multicasting on {uri}", mgr.add_streamer(uri))
         return _err(f"Unknown operation {operation!r}")
     except Exception as exc:
+        logger.exception("openbci_export failed")
         return _err(str(exc))

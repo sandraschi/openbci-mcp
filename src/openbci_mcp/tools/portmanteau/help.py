@@ -45,6 +45,11 @@ TOOL_CATALOG = [
         "operations": ["overview", "quickstart", "ports"],
         "description": "This help tool",
     },
+    {
+        "name": "openbci_shutdown",
+        "operations": ["shutdown"],
+        "description": "Graceful server shutdown",
+    },
 ]
 
 
@@ -62,6 +67,14 @@ async def openbci_help(
     - overview: Tool catalog and board keys.
     - quickstart: Typical Cyton USB workflow.
     - ports: Fleet port assignments.
+
+    ## Return Format
+    ``{"success": True, "message": str, "markdown": str, "tools": [...]}``.
+
+    ## Examples
+    ``openbci_help()`` -> full catalog.
+    ``openbci_help(operation="quickstart")`` -> Cyton USB steps.
+    ``openbci_help(operation="ports")`` -> 10758/10759 assignments.
     """
     if operation == "ports":
         text = (
@@ -70,7 +83,9 @@ async def openbci_help(
             "- Frontend (Vite dashboard): 10758\n"
             "- MCP endpoint: http://127.0.0.1:10759/mcp\n"
         )
-        return ToolResult(content={"success": True, "markdown": text, "tools": TOOL_CATALOG})
+        return ToolResult(
+            content={"success": True, "message": "Port assignments", "markdown": text, "tools": TOOL_CATALOG}
+        )
 
     if operation == "quickstart":
         text = (
@@ -82,7 +97,7 @@ async def openbci_help(
             "5. `openbci_export(operation='streamer_multicast')` for GUI bridge\n"
             "6. `openbci_board(operation='disconnect')` when done\n"
         )
-        return ToolResult(content={"success": True, "markdown": text})
+        return ToolResult(content={"success": True, "message": "Cyton quickstart", "markdown": text})
 
     text = (
         "# openbci-mcp\n\n"
@@ -92,4 +107,6 @@ async def openbci_help(
         + "\n\n## Env\n"
         "- OPENBCI_SERIAL_PORT, OPENBCI_BOARD_ID, OPENBCI_MCP_PORT\n"
     )
-    return ToolResult(content={"success": True, "markdown": text, "tools": TOOL_CATALOG})
+    return ToolResult(
+        content={"success": True, "message": f"{len(TOOL_CATALOG)} tools", "markdown": text, "tools": TOOL_CATALOG}
+    )
