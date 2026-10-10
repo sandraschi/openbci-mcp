@@ -1,0 +1,26 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.0
+    hooks:
+      - id: ruff
+        args: [--fix, --unsafe-fixes, src, tests]
+      - id: ruff-format
+        args: [src, tests]
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        types: [text]
+      - id: end-of-file-fixer
+        types: [text]
+      - id: check-yaml
+      - id: check-added-large-files
+        args: [--maxkb=2000]
+  - repo: local
+    hooks:
+      - id: biome-web
+        name: biome (web_sota)
+        entry: powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/pre-commit-biome.ps1
+        language: system
+        pass_filenames: false
+        always_run: true

@@ -1,0 +1,18 @@
+# MCPB bundle exclusions (MCPB_PACKAGING_STANDARDS.md 2.4)
+.venv/
+node_modules/
+web_sota/
+webapp/
+native/
+target/
+tests/
+data/
+dist/
+*.bak
+*.bak.*
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+reports/
+.env
