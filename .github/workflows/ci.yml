@@ -1,0 +1,30 @@
+name: ci
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+jobs:
+  python:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: uv sync --extra dev
+      - run: uv run ruff check src tests
+      - run: uv run ruff format src tests --check
+      - run: uv run pyright src
+      - run: uv run pytest tests/ -q
+  web:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci --prefix web_sota
+      - run: npm --prefix web_sota run biome:ci
+      - run: npm --prefix web_sota run build
