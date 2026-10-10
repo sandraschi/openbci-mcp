@@ -10,11 +10,14 @@ import sys
 
 import uvicorn
 
+from openbci_mcp import prompts as _prompts  # noqa: F401  (registers prompt templates)
+from openbci_mcp import resources  # noqa: F401  (registers openbci://boards/capabilities)
 from openbci_mcp.config import load_settings
 from openbci_mcp.mcp_app import mcp
 from openbci_mcp.tools import (
     agentic,  # noqa: F401
     portmanteau,  # noqa: F401
+    shutdown,  # noqa: F401
 )
 
 

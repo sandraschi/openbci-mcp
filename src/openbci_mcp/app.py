@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
+import sys
+import threading
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -15,6 +18,8 @@ from starlette.responses import JSONResponse
 from starlette.routing import Mount, Route, WebSocketRoute
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
+from openbci_mcp import prompts as _prompts  # noqa: F401  (registers openbci-quickstart, openbci-osc-recipe)
+from openbci_mcp import resources  # noqa: F401  (registers openbci://boards/capabilities)
 from openbci_mcp.activity_log import install_log_handler, log_activity
 from openbci_mcp.api.help_routes import api_help_doc, api_help_index
 from openbci_mcp.api.llm_routes import api_ai_chat, api_llm_providers
@@ -27,10 +32,30 @@ from openbci_mcp.mcp_app import mcp
 from openbci_mcp.tools import (
     agentic,  # noqa: F401
     portmanteau,  # noqa: F401
+    shutdown,  # noqa: F401
 )
 from openbci_mcp.trigger_engine import get_trigger_engine
 
 logger = logging.getLogger(__name__)
+
+
+class _BareMcpRewrite:
+    """Map the bare ``/mcp`` path to ``/mcp/`` before routing.
+
+    Starlette ``Mount("/mcp")`` only matches ``/mcp/*`` — a client asking for
+    the bare path falls through to unrelated handlers (405). A ``Route``
+    cannot delegate raw ASGI, so this tiny middleware rewrites the scope.
+    """
+
+    def __init__(self, app: Any) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Any, receive: Any, send: Any) -> None:
+        if scope.get("type") == "http" and scope.get("path") == "/mcp":
+            scope = dict(scope)
+            scope["path"] = "/mcp/"
+        await self.app(scope, receive, send)
+
 
 TOOL_CATALOG = [
     {
@@ -75,6 +100,7 @@ TOOL_CATALOG = [
     },
     {"name": "agentic_openbci_workflow", "type": "agentic", "operations": ["workflow"]},
     {"name": "openbci_help", "type": "portmanteau", "operations": ["overview", "quickstart", "ports"]},
+    {"name": "openbci_shutdown", "type": "tool", "operations": ["shutdown"]},
 ]
 
 mcp_http = mcp.http_app(path="/")
@@ -86,6 +112,7 @@ async def health(_: Request) -> JSONResponse:
     st = mgr.status_dict()
     return JSONResponse(
         {
+            "status": "ok",
             "ok": True,
             "service": "openbci-mcp",
             "version": "0.1.0",
@@ -124,6 +151,64 @@ async def api_tools(_: Request) -> JSONResponse:
     return JSONResponse({"success": True, "tools": TOOL_CATALOG})
 
 
+async def api_capabilities(_: Request) -> JSONResponse:
+    """Fleet-standard capabilities shape: tools + boards + ports + docs."""
+    from openbci_mcp.resources import board_capabilities
+
+    settings = load_settings()
+    catalog = board_capabilities()
+    boards = catalog["boards"]
+    return JSONResponse(
+        {
+            "success": True,
+            "service": "openbci-mcp",
+            "version": "0.1.0",
+            "tools": TOOL_CATALOG,
+            "boards": boards,
+            "ports": {
+                "frontend": 10758,
+                "backend": settings.port,
+                "osc_default": f"{settings.osc_host}:{settings.osc_port}",
+            },
+            "health": "/health",
+            "docs": "/api/help",
+            "message": f"{len(TOOL_CATALOG)} tools, {len(boards)} board profiles",
+        }
+    )
+
+
+async def api_diagnostics(_: Request) -> JSONResponse:
+    """CUA-NSIS smoke-test surface: tool list, board state, runtime info."""
+    mgr = get_board_manager()
+    return JSONResponse(
+        {
+            "success": True,
+            "service": "openbci-mcp",
+            "version": "0.1.0",
+            "tools": [t["name"] for t in TOOL_CATALOG],
+            "resources": ["openbci://boards/capabilities"],
+            "board": mgr.status_dict(),
+            "system": {"python": sys.version.split()[0], "platform": sys.platform},
+            "endpoints": ["/health", "/api/status", "/api/capabilities", "/api/v1/diagnostics"],
+        }
+    )
+
+
+async def api_shutdown(request: Request) -> JSONResponse:
+    """Orderly exit: respond 200 immediately, exit ~500 ms later (fleet launcher contract)."""
+    try:
+        body: dict[str, Any] = await request.json()
+    except Exception:
+        body = {}
+    try:
+        grace = int((body or {}).get("grace_ms", 500))
+    except (TypeError, ValueError):
+        grace = 500
+    threading.Timer(max(0, grace) / 1000.0, lambda: os._exit(0)).start()
+    log_activity("system", f"shutdown requested ({grace} ms)", level="INFO")
+    return JSONResponse({"success": True, "message": f"exiting in {grace} ms", "grace_ms": grace})
+
+
 async def api_board_action(request: Request) -> JSONResponse:
     try:
         body: dict[str, Any] = await request.json()
@@ -158,6 +243,7 @@ async def api_board_action(request: Request) -> JSONResponse:
         log_activity("board_action", f"board/{op}", level=level, meta={"operation": op})
         return JSONResponse(result)
     except Exception as exc:
+        logger.exception("board_action failed")
         log_activity("board_action", f"board/{op} failed: {exc}", level="ERROR")
         return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
 
@@ -188,6 +274,7 @@ async def api_triggers(request: Request) -> JSONResponse:
         log_activity("trigger", f"trigger/{op}", level=level, meta={"operation": op})
         return JSONResponse(result)
     except Exception as exc:
+        logger.exception("trigger action failed")
         log_activity("trigger", f"trigger/{op} failed: {exc}", level="ERROR")
         return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
 
@@ -234,6 +321,16 @@ async def api_skill(_: Request) -> JSONResponse:
     return JSONResponse({"success": False, "error": "skill not found"}, status_code=404)
 
 
+async def api_skills(_: Request) -> JSONResponse:
+    return JSONResponse(
+        {
+            "success": True,
+            "skills": [{"name": "openbci", "uri": "openbci://skills/openbci", "detail": "/api/skill"}],
+            "message": "1 skill available",
+        }
+    )
+
+
 @asynccontextmanager
 async def _lifespan(app: Starlette):
     install_log_handler()
@@ -249,11 +346,21 @@ def build_app() -> Starlette:
     middleware = [
         Middleware(
             CORSMiddleware,
-            allow_origins=["*"],
+            allow_origins=[
+                "http://127.0.0.1:10758",
+                "http://localhost:10758",
+                "http://127.0.0.1:10759",
+                "http://localhost:10759",
+                "tauri://localhost",
+                "http://tauri.localhost",
+                "https://tauri.localhost",
+            ],
+            allow_origin_regex=r"https?://(([a-zA-Z0-9-]+\.)*(ts\.net|local|lan|home|internal|invalid)|localhost|127\.0\.0\.1|goliath)(:\d+)?",
             allow_credentials=True,
             allow_methods=["*"],
             allow_headers=["*"],
-        )
+        ),
+        Middleware(_BareMcpRewrite),
     ]
     return Starlette(
         lifespan=_lifespan,
@@ -264,6 +371,9 @@ def build_app() -> Starlette:
             Route("/api/status", api_status),
             Route("/api/boards", api_boards),
             Route("/api/tools", api_tools),
+            Route("/api/capabilities", api_capabilities),
+            Route("/api/v1/diagnostics", api_diagnostics),
+            Route("/api/shutdown", api_shutdown, methods=["POST"]),
             Route("/api/help", api_help_index),
             Route("/api/help/{doc_id}", api_help_doc),
             Route("/api/logs", api_logs_query, methods=["GET"]),
@@ -271,10 +381,12 @@ def build_app() -> Starlette:
             Route("/api/logs/export", api_logs_export),
             Route("/api/logs", api_logs_clear, methods=["DELETE"]),
             Route("/api/llm/providers", api_llm_providers),
+            Route("/api/llm/discover", api_llm_providers),
             Route("/api/ai/chat", api_ai_chat, methods=["POST"]),
             Route("/api/board", api_board_action, methods=["POST"]),
             Route("/api/triggers", api_triggers, methods=["GET", "POST"]),
             Route("/api/skill", api_skill),
+            Route("/api/skills", api_skills),
             WebSocketRoute("/api/ws/eeg", ws_eeg),
             *[Route(p, redirect_to_webapp) for p in WEBAPP_PATHS],
             Mount(path, app=mcp_http),
