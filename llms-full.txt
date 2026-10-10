@@ -1,0 +1,57 @@
+# openbci-mcp — full reference
+
+FastMCP (>=3.4.4,<4) server + Starlette REST + WebSocket dashboard for OpenBCI hardware via BrainFlow.
+
+## Ports
+
+- Frontend (Vite dashboard): 10758
+- Backend (REST + MCP HTTP /mcp + WebSocket /api/ws/eeg): 10759
+- OSC trigger default target: 127.0.0.1:9000 (OPENBCI_OSC_HOST / OPENBCI_OSC_PORT)
+
+## MCP tools (portmanteau + agentic + util)
+
+- openbci_board: connect, disconnect, status, list_ports, list_boards, probe
+- openbci_stream: start, stop, snapshot, marker
+- openbci_signal: band_power, filter
+- openbci_export: streamer_add, streamer_file, streamer_multicast
+- openbci_trigger: send_osc, list_rules, add_rule, remove_rule, evaluate, history, fire_test
+- agentic_openbci_workflow: multi-step sampling workflow (SEP-1577, needs ctx)
+- openbci_help: overview, quickstart, ports (Prefab card app=True)
+- openbci_shutdown: graceful process exit (grace_ms)
+
+## MCP resources / prompts
+
+- Resource: openbci://boards/capabilities — BrainFlow board id, channel count, transport, units, sampling rate (nulls mean "read status after connect").
+- Prompts: openbci-quickstart, openbci-osc-recipe.
+
+## REST endpoints
+
+- GET /health -> {status: ok, board: {...}}
+- GET /api/status, /api/boards, /api/tools, /api/capabilities, /api/v1/diagnostics
+- GET /api/help, /api/help/{doc_id}; GET /api/skill, /api/skills
+- GET /api/logs, /api/logs/stats, /api/logs/export; DELETE /api/logs
+- GET /api/llm/providers (+ alias /api/llm/discover); POST /api/ai/chat
+- POST /api/board, /api/triggers (GET too); POST /api/shutdown
+- WS /api/ws/eeg — 10 Hz frames (snapshot + bands + fired_triggers) while streaming
+
+## Env vars
+
+OPENBCI_MCP_HOST (127.0.0.1), OPENBCI_MCP_PORT (10759), OPENBCI_MCP_HTTP_PATH (/mcp),
+OPENBCI_SERIAL_PORT, OPENBCI_BOARD_ID (0), OPENBCI_MAC_ADDRESS, OPENBCI_IP_ADDRESS (225.1.1.1),
+OPENBCI_IP_PORT (6677), OPENBCI_PROBE (0), OPENBCI_OSC_HOST (127.0.0.1), OPENBCI_OSC_PORT (9000),
+OPENBCI_TRIGGERS_FILE (~/.openbci-mcp/triggers.json).
+
+## Architecture
+
+src/openbci_mcp/: app.py (Starlette, explicit CORS + /mcp rewrite middleware), mcp_app.py
+(FastMCP singleton), resources.py (board capabilities), board_manager.py (BrainFlow singleton),
+trigger_engine.py (10 Hz fixed-hop threshold rules -> OSC), osc_client.py, transport removed
+(dead run_http_async path; serve via uvicorn, stdio via mcp.run_stdio_async), tools/ (portmanteau
++ shutdown + agentic), prompts.py, api/ (help, llm, logs, redirect), llm/ (Ollama/LM Studio glom).
+web_sota/: React+Vite dashboard, same-origin /api via Vite proxy (absolute backend URL only
+behind Tauri gate). native/: Tauri 2 shell (frontendDist ../web_sota/dist).
+
+## Key files
+
+README.md, docs/ONBOARDING.md, docs/OSC_INTEGRATION.md (trigger timing), docs/TOOLS.md,
+docs/CONFIGURATION.md, CHANGELOG.md, AGENTS.md, CLAUDE.md, fleet-start.config.ps1.
