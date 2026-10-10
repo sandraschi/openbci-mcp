@@ -1,0 +1,10 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "text",
+        "content": "## openbci-mcp\nBefore starting work: openbci_board(operation=\"status\"); read docs/OSC_INTEGRATION.md trigger timing (fixed 10 Hz hop). Tools return {success, message}. At end: just gates + CHANGELOG, tree clean."
+      }
+    ]
+  }
+}

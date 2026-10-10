@@ -1,0 +1,6 @@
+{
+  "name": "openbci-mcp",
+  "description": "OpenBCI BrainFlow EEG tools: board, stream, signal, export, OSC triggers",
+  "version": "0.1.0",
+  "hooks": "../hooks/hooks.json"
+}

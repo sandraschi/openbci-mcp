@@ -1,0 +1,10 @@
+# openbci-mcp rules (session context below)
+
+Python (uv), React+Vite dashboard (web_sota/), Tauri shell (native/).
+Gates: `just gates` (ruff, pyright, pytest). Never `allow_origins=["*"]`.
+Tools return `{success, message, ...}`. Triggers: fixed 10 Hz hop (docs/OSC_INTEGRATION.md).
+
+## Session Context (openbci-mcp)
+
+Before starting work: probe `openbci_board(operation="status")` and read `docs/OSC_INTEGRATION.md` timing.
+At end of work: run `just gates`, update CHANGELOG.md, never leave the tree dirty.
