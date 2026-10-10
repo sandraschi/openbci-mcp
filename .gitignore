@@ -7,10 +7,12 @@ build/
 *.egg-info/
 .pytest_cache/
 .ruff_cache/
+.coverage
 
 # Node
 node_modules/
 web_sota/dist/
+*.tsbuildinfo
 
 # IDE / OS
 .env
@@ -23,3 +25,22 @@ Thumbs.db
 recordings/
 *.csv
 *.bdf
+
+# Assfix working snapshots (regenerable, opencode-macro compatible)
+reports/
+# ...but the registry-visible copy IS committed
+!docs/assess-reports/
+
+# Claude Desktop bundles (build artifacts)
+*.mcpb
+
+# Batch-edit backups (Batch Mutation Safety rule)
+*.bak
+*.bak.*
+
+# Tauri / Rust build output
+native/target/
+native/gen/
+
+# MCPB pack staging (exact copy of src/, never commit)
+mcpb/src/

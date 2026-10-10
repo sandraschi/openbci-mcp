@@ -24,7 +24,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "pytest-asyncio>=0.24", "ruff>=0.16.0,<0.17", "pre-commit>=4"]
+dev = ["pytest>=8", "pytest-asyncio>=0.24", "pytest-cov>=6", "ruff>=0.16.0,<0.17", "pre-commit>=4", "pyright>=1.1.414"]
 
 [project.urls]
 Homepage = "https://github.com/sandraschi/openbci-mcp"
@@ -43,14 +43,18 @@ openbci_mcp = ["skills/**/*.md", "bundled_docs/**/*.md"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+addopts = ["--cov=src/openbci_mcp", "--cov-report=term-missing", "--cov-fail-under=40"]
+
+[tool.coverage.run]
+branch = true
 
 [tool.ruff]
 line-length = 120
 target-version = "py312"
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "B", "S", "UP", "RUF"]
-ignore = ["S101", "B008", "S106", "S110", "S112", "S101", "B008", "S106", "S110", "S112", "RUF012", "S603", "S607", "S324", "E402", "E501"]
+select = ["E", "F", "W", "I", "B", "S", "T20", "UP", "RUF"]
+ignore = ["S101", "B008", "S106", "RUF012", "S603", "S607", "S324", "E402", "E501"]
 
 [tool.ruff.format]
 quote-style = "double"
